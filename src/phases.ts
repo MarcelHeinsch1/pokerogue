@@ -5040,12 +5040,12 @@ export class EggLapsePhase extends Phase {
     });
 
     let eggsToHatchCount: integer = eggsToHatch.length;
-
+    const hatchedPokemon: PlayerPokemon[] = [];
     if (eggsToHatchCount) {
       this.scene.queueMessage(i18next.t("battle:eggHatching"));
 
       for (const egg of eggsToHatch) {
-        this.scene.unshiftPhase(new EggHatchPhase(this.scene, egg, eggsToHatchCount));
+        this.scene.unshiftPhase(new EggHatchPhase(this.scene, egg, eggsToHatchCount, eggsToHatch,hatchedPokemon));
         if (eggsToHatchCount > 0) {
           eggsToHatchCount--;
         }

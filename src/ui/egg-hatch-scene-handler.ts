@@ -41,6 +41,11 @@ export default class EggHatchSceneHandler extends UiHandler {
       if (phase instanceof EggHatchPhase && phase.trySkip()) {
         return true;
       }
+    } else if (button === Button.UP || button === Button.LEFT || button === Button.RIGHT || button === Button.DOWN) {
+      const phase = this.scene.getCurrentPhase();
+      if (phase instanceof EggHatchPhase && phase.trySkipAll()) {
+        return true;
+      }
     }
 
     return this.scene.ui.getMessageHandler().processInput(button);

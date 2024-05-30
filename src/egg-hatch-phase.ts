@@ -16,6 +16,8 @@ import EggsToHatchCountContainer from "./ui/eggs-to-hatch-count-container";
 
 export class EggHatchPhase extends Phase {
   private egg: Egg;
+  private eggs: Egg[];
+  private hatchedPokemon: PlayerPokemon[];
 
   private eggsToHatchCount: integer;
   private eggsToHatchCountContainer: EggsToHatchCountContainer;
@@ -40,16 +42,18 @@ export class EggHatchPhase extends Phase {
   private skipped: boolean;
   private evolutionBgm: AnySound;
 
-  constructor(scene: BattleScene, egg: Egg, eggsToHatchCount: integer) {
+  constructor(scene: BattleScene, egg: Egg, eggsToHatchCount: integer, eggsToHatch: Egg[], hatchedPokemon: PlayerPokemon[]) {
     super(scene);
 
     this.egg = egg;
+    this.eggs = eggsToHatch;
     this.eggsToHatchCount = eggsToHatchCount;
+    this.hatchedPokemon = hatchedPokemon;
   }
 
   start() {
     super.start();
-
+    console.log(this.hatchedPokemon);
     this.scene.ui.setModeForceTransition(Mode.EGG_HATCH_SCENE).then(() => {
 
       if (!this.egg) {
@@ -125,6 +129,7 @@ export class EggHatchPhase extends Phase {
       this.pokemonSprite.setVisible(false);
 
       this.pokemon = pokemon;
+      this.hatchedPokemon.push(pokemon);
 
       pokemon.loadAssets().then(() => {
         this.canSkip = true;
@@ -237,6 +242,32 @@ export class EggHatchPhase extends Phase {
       this.doReveal();
     }
     return true;
+  }
+
+  trySkipAll(): boolean {
+    if (!this.canSkip) {
+      return false;
+    }
+    this.canSkip = false;
+    this.doHatchAll();
+    return true;
+  }
+
+  doHatchAll(): void {
+    this.hatched = true;
+    if (this.evolutionBgm) {
+      SoundFade.fadeOut(this.scene, this.evolutionBgm, Utils.fixedInt(100));
+    }
+    this.generateAllPokemon();
+    console.log(this.hatchedPokemon);
+    this.doRevealAll();
+  }
+
+  doRevealAll(): void {
+    this.eggsToHatchCount = 0;
+    this.eggsToHatchCountContainer.setVisible(false);
+    while (this.scene.tryRemovePhase(phase => phase instanceof EggHatchPhase)) {}
+    this.end();
   }
 
   doHatch(): void {
@@ -385,6 +416,29 @@ export class EggHatchPhase extends Phase {
     };
 
     updateParticle();
+  }
+  generateAllPokemon(): PlayerPokemon[] {
+    const startEgg = this.egg;
+    const startIndex = this.eggs.findIndex(egg => egg.id === startEgg.id);
+
+    if (startIndex !== -1) {
+      for (let i = startIndex+1; i < this.eggs.length; i++) {
+        this.egg = this.eggs[i];
+        const pokemon = this.generatePokemon();
+        if (pokemon.fusionSpecies) {
+          pokemon.clearFusionSpecies();
+        }
+        this.hatchedPokemon.push(pokemon);
+        this.scene.gameData.setPokemonCaught(this.pokemon, true, true).then(() => {
+          this.scene.gameData.setEggMoveUnlocked(this.pokemon.species, this.eggMoveIndex).then(() => {
+          });
+        });
+      }
+    }
+    /*this.hatchedPokemon.forEach(pokemon => {
+    console.log(pokemon.species.name);
+    });*/
+    return this.hatchedPokemon;
   }
 
   generatePokemon(): PlayerPokemon {
