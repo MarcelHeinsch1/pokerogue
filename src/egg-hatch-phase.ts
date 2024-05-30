@@ -259,7 +259,6 @@ export class EggHatchPhase extends Phase {
       SoundFade.fadeOut(this.scene, this.evolutionBgm, Utils.fixedInt(100));
     }
     this.generateAllPokemon();
-    console.log(this.hatchedPokemon);
     this.doRevealAll();
   }
 
@@ -433,11 +432,10 @@ export class EggHatchPhase extends Phase {
           this.scene.gameData.setEggMoveUnlocked(this.pokemon.species, this.eggMoveIndex).then(() => {
           });
         });
+        const eggIndex = this.scene.gameData.eggs.findIndex(e => e.id === this.egg.id);
+        this.scene.gameData.eggs.splice(eggIndex, 1);
       }
     }
-    /*this.hatchedPokemon.forEach(pokemon => {
-    console.log(pokemon.species.name);
-    });*/
     return this.hatchedPokemon;
   }
 
